@@ -82,7 +82,7 @@ with col2:
     if st.button("Next →") and st.session_state.idx < len(df) - 1:
         st.session_state.idx += 1
 with col3:
-    new_index = st.text_input("Jump to", value=str(st.session_state.idx), max_chars=3)
+    new_index = st.text_input("Jump to", value=str(st.session_state.idx), max_chars=4)
 with col4:
     if st.button("Go") and new_index.isdigit():
         i = int(new_index)
@@ -207,7 +207,7 @@ qualification = st.radio(
 st.write("")  # Add spacing
 
 # Instagram section with smaller question text
-st.markdown('<p class="question-text">What is the official Instagram of the account?</p>', unsafe_allow_html=True)
+st.markdown('<p class="question-text">What is the official Instagram of the account? (No Change Needed if Unqualified)</p>', unsafe_allow_html=True)
 instagram_status = st.radio(
     "Instagram Status",
     ["No change needed",
