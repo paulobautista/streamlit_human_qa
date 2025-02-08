@@ -104,7 +104,7 @@ def make_clickable(val):
 
 # Convert URLs to clickable links
 df_html = df_display.copy()
-for col in ['brand_website', 'brand_instagram_link', 'brand_recipes_url']:
+for col in ['brand_website', 'brand_instagram_link']:
     df_html[col] = df_html[col].apply(make_clickable)
 
 # Apply custom styling to make the table text bigger and handle links
