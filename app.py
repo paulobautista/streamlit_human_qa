@@ -60,6 +60,12 @@ if "insta_none" not in st.session_state:
     st.session_state.insta_none = False
 if "show_comment" not in st.session_state:
     st.session_state.show_comment = False
+if "clear_counter" not in st.session_state:
+    st.session_state.clear_counter = 0
+if "recipe_url_default" not in st.session_state:
+    st.session_state.recipe_url_default = ""
+if "instagram_default" not in st.session_state:
+    st.session_state.instagram_default = ""
 
 # Add reviewer name field at the top
 reviewer_name = st.text_input(
@@ -104,7 +110,7 @@ def make_clickable(val):
 
 # Convert URLs to clickable links
 df_html = df_display.copy()
-for col in ['brand_website', 'brand_instagram_link']:
+for col in ['brand_website', 'brand_recipes_url', 'brand_instagram_link']:
     df_html[col] = df_html[col].apply(make_clickable)
 
 # Apply custom styling to make the table text bigger and handle links
@@ -134,13 +140,17 @@ st.write(df_html.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # Create Google and Instagram search URLs
 google_search_url = f"https://www.google.com/search?q={row_data['brand_name'].replace(' ', '+')}"
+recipe_search_url = f"https://www.google.com/search?q={row_data['brand_name'].replace(' ', '+')}+ recipe"
 instagram_search_url = f"https://www.google.com/search?q={row_data['brand_name'].replace(' ', '+')}+Instagram"
 
+
 # Create two buttons side by side
-search_col1, search_col2, _ = st.columns([1, 1, 10])
+search_col1, search_col2, search_col3, _ = st.columns([1,   1, 1, 10])
 with search_col1:
     st.link_button("🔍 Google Search", google_search_url, type="secondary", help="Open Google search in new tab")
 with search_col2:
+    st.link_button("🔍 Recipe Search", recipe_search_url, type="secondary", help="Open Google search in new tab")
+with search_col3:
     st.link_button("📸 Instagram Search", instagram_search_url, type="secondary", help="Open Instagram search in new tab")
 
 # Custom styling for headers, text, and checkbox
@@ -206,6 +216,24 @@ qualification = st.radio(
 
 st.write("")  # Add spacing
 
+st.markdown('<p class="question-text">Check the recipe URL. Is it correct and valid?', unsafe_allow_html=True)
+recipe_url_qualification = st.radio(
+    "",
+    ["Valid - No change needed", "There is no recipe URL for this brand", "Here is the corrected recipe URL"],
+    key=f"recipe_url_qualification_{st.session_state.clear_counter}",
+    horizontal=True,
+    index=None
+)
+
+recipe_url = st.text_input(
+    "Corrected Recipe URL",
+    value=st.session_state.recipe_url_default,
+    max_chars=100,
+    key=f"recipe_url_input_{st.session_state.clear_counter}"
+)
+
+st.write("")  # Add spacing
+
 # Instagram section with smaller question text
 st.markdown('<p class="question-text">What is the official Instagram of the account? (No Change Needed if Unqualified)</p>', unsafe_allow_html=True)
 instagram_status = st.radio(
@@ -217,7 +245,12 @@ instagram_status = st.radio(
     horizontal=False,
     label_visibility="collapsed"
 )
-instagram = st.text_input("Instagram", max_chars=100, key="instagram_input")  # Just a blank field
+instagram = st.text_input(
+    "Instagram",
+    value=st.session_state.instagram_default,
+    max_chars=100,
+    key=f"instagram_input_{st.session_state.clear_counter}"
+)
 
 # Brand of Brands section with small checkbox
 st.markdown('<p class="question-text">Is this brand a brand of brands?</p>', unsafe_allow_html=True)
@@ -234,8 +267,10 @@ if st.button("Submit", use_container_width=True, key="submit_button"):
         # Gather your data in a dictionary
         answer_data = {
             "qualification": qualification,
+            "recipe_url_qualification": recipe_url_qualification,
+            "recipe_url": recipe_url,
             "instagram_status": instagram_status,
-            "instagram": instagram,  # Always store the instagram field value
+            "instagram": instagram,
             "brand_of_brands": brand_of_brands,
             "comment": comment
         }
@@ -244,9 +279,14 @@ if st.button("Submit", use_container_width=True, key="submit_button"):
         success = save_to_database(st.session_state.reviewer_name, answer_data, brand_id)
         if success:
             st.success("Data saved successfully!")
+            # Increment the clear_counter so that the next run re-creates the inputs with fresh keys
+            st.session_state.clear_counter += 1
+            # Optionally, also reset these default values if you use them elsewhere
+            st.session_state.recipe_url_default = ""
+            st.session_state.instagram_default = ""
             if st.session_state.idx < len(df) - 1:
                 st.session_state.idx += 1
-                st.rerun()
+            st.rerun()
         else:
             st.error("Failed to save data. Please check the logs for errors.")
 
